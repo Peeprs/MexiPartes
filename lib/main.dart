@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'services/notification_service.dart';
+
+// Theme
+import 'screens/core/app_theme.dart';
+import 'providers/theme_provider.dart';
+
 // Providers
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
@@ -18,6 +22,7 @@ import 'screens/auth/screens/cookie_notice_screen.dart';
 
 // Screens - Car
 import 'screens/car/screens/car_selection_screen.dart';
+import 'screens/buyer_chats_screen.dart';
 
 // Screens - Home
 import 'screens/home/main_screen.dart';
@@ -46,11 +51,23 @@ import 'screens/seller/seller_dashboard_screen.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'services/firebase_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+  
+  if (kDebugMode) {
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
+  }
 
   await Supabase.initialize(
     url: 'https://numwrtupwzmdnzbrocje.supabase.co',
@@ -60,9 +77,8 @@ void main() async {
   try {
     await NotificationService().initialize();
     await FirebaseNotificationService().initialize();
-    print('Notificaciones inicializadas');
   } catch (e) {
-    print('Error al inicializar notificaciones: $e');
+    debugPrint('Error al inicializar notificaciones: $e');
   }
 
   runApp(const MyApp());
@@ -73,158 +89,64 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // AGREGAMOS EL MULTIPROVIDER AQUÍ
     return MultiProvider(
       providers: [
+        // NUEVO: ThemeProvider va primero para que esté disponible en todo
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => CarProvider()),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'MexiPartes',
+      // Consumer del ThemeProvider para reconstruir MaterialApp al cambiar tema
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'MexiPartes',
 
-        // Tema Premium Dark/Red/White
-        theme: ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: Colors.black, // Negro puro
-          primaryColor: Colors.red,
+            // ── TEMAS ─────────────────────────────────────
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: themeProvider.themeMode, // Controlado por el provider
 
-          // Definición de colores principales
-          colorScheme: const ColorScheme.dark(
-            primary: Colors.red, // Rojo principal
-            onPrimary: Colors.white,
-            secondary: Colors.redAccent,
-            surface: Color(
-              0xFF101010,
-            ), // Superficies (tarjetas) ligeramente grises
-            onSurface: Colors.white,
-            error: Colors.redAccent,
-          ),
+            home: const AuthWrapper(),
 
-          // Tipografía moderna (Google Fonts style placeholder)
-          textTheme: const TextTheme(
-            displayLarge: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 32,
-            ),
-            titleLarge: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
-            bodyLarge: TextStyle(color: Colors.white70, fontSize: 16),
-            bodyMedium: TextStyle(color: Colors.white60, fontSize: 14),
-          ),
-
-          // Inputs (TextFields) estilo Dark
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: const Color(0xFF1C1C1E),
-            labelStyle: const TextStyle(color: Colors.white54),
-            hintStyle: const TextStyle(color: Colors.white38),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red, width: 1.5),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.redAccent),
-            ),
-          ),
-
-          // Botones Elevados (Rojos por defecto)
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              textStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+            routes: {
+              '/login': (context) => const LoginScreen(),
+              '/user_crud': (context) => const UsuarioCrudScreen(),
+              '/usuarios': (context) => const UsuariosListScreen(),
+              '/register': (context) => const RegisterScreen(),
+              '/forgot_password': (context) => const ForgotPasswordScreen(),
+              '/main': (context) => const MainScreen(),
+              '/email_confirmation': (context) =>
+                  const EmailConfirmationScreen(),
+              '/car_selection': (context) => const CarSelectionScreen(),
+              '/privacy_policy': (context) => const PrivacyPolicyScreen(),
+              '/cookie_notice': (context) => const CookieNoticeScreen(),
+              '/buyer_chats': (context) => const BuyerChatsScreen(),
+              '/orders': (context) => const OrdersScreen(),
+              '/addresses': (context) => const AddressesScreen(),
+              '/add_edit_address': (context) => const AddEditAddressScreen(),
+              '/cart': (context) => const CartScreen(),
+              '/checkout': (context) => const CheckoutScreen(),
+              '/address_selection': (context) => const AddressSelectionScreen(),
+              '/processing': (context) => const ProcessingScreen(),
+              '/confirmation': (context) => const ConfirmationScreen(),
+              '/seller_dashboard': (context) => const SellerDashboardScreen(),
+              '/publish_product': (context) => const PublishProductScreen(),
+              '/edit_profile': (context) => Consumer<AuthProvider>(
+                builder: (context, auth, _) {
+                  final user = auth.usuarioActual;
+                  if (user == null) {
+                    return const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  return UsuarioCrudScreen(usuario: user);
+                },
               ),
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 4,
-              shadowColor: Colors.red.withOpacity(0.4),
-            ),
-          ),
-
-          // AppBars limpias
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.black,
-            elevation: 0,
-            surfaceTintColor: Colors.black,
-            centerTitle: true,
-            iconTheme: IconThemeData(color: Colors.white),
-            titleTextStyle: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-            systemOverlayStyle: SystemUiOverlayStyle(
-              statusBarColor: Colors.black,
-              statusBarIconBrightness: Brightness.light,
-            ),
-          ),
-
-          // Bottom Navigation Bar
-          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-            backgroundColor: Color(0xFF0A0A0A),
-            selectedItemColor: Colors.red,
-            unselectedItemColor: Colors.grey,
-            type: BottomNavigationBarType.fixed,
-            elevation: 0,
-          ),
-        ),
-
-        home: const AuthWrapper(),
-
-        // La tabla de rutas se mantiene para la navegación interna (Navigator.pushNamed)
-        routes: {
-          '/login': (context) => const LoginScreen(),
-          '/user_crud': (context) => const UsuarioCrudScreen(),
-          '/usuarios': (context) => const UsuariosListScreen(),
-          '/register': (context) => const RegisterScreen(),
-          '/forgot_password': (context) => const ForgotPasswordScreen(),
-          '/main': (context) => const MainScreen(),
-          '/email_confirmation': (context) => const EmailConfirmationScreen(),
-          '/car_selection': (context) => const CarSelectionScreen(),
-          '/privacy_policy': (context) => const PrivacyPolicyScreen(),
-          '/cookie_notice': (context) => const CookieNoticeScreen(),
-          '/orders': (context) => const OrdersScreen(),
-          '/addresses': (context) => const AddressesScreen(),
-          '/add_edit_address': (context) => const AddEditAddressScreen(),
-          '/cart': (context) => const CartScreen(),
-          '/checkout': (context) => const CheckoutScreen(),
-          '/address_selection': (context) => const AddressSelectionScreen(),
-          '/processing': (context) => const ProcessingScreen(),
-          '/confirmation': (context) => const ConfirmationScreen(),
-          '/seller_dashboard': (context) => const SellerDashboardScreen(),
-          '/publish_product': (context) => const PublishProductScreen(),
-          '/edit_profile': (context) => Consumer<AuthProvider>(
-            builder: (context, auth, _) {
-              final user = auth.usuarioActual;
-              if (user == null) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-              return UsuarioCrudScreen(usuario: user);
             },
-          ),
+          );
         },
       ),
     );

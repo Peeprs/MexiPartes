@@ -84,12 +84,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final isLoading = authProvider.isLoading;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -100,32 +100,32 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 40),
-              const Icon(Icons.lock_reset, color: Colors.white, size: 80),
+              Icon(Icons.lock_reset, color: Theme.of(context).iconTheme.color, size: 80),
               const SizedBox(height: 30),
-              const Text(
+              Text(
                 'Recuperar Contraseña',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Ingresa tu correo y define tu nueva contraseña para recuperar el acceso.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.5),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16, height: 1.5),
               ),
               const SizedBox(height: 40),
               
               // CAMPO CORREO
-              const Text('Correo Electrónico', style: TextStyle(color: Colors.white, fontSize: 16)),
+              Text('Correo Electrónico', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16)),
               const SizedBox(height: 8),
               TextField(
                 controller: _emailController,
-                style: const TextStyle(color: Colors.black),
+                // style removed
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   hintText: 'Ingresa tu correo',
-                  filled: true,
-                  fillColor: Colors.white,
+                  // filled removed
+                  // fillColor removed
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
@@ -133,21 +133,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               const SizedBox(height: 20),
 
               // NUEVO: CAMPO NUEVA CONTRASEÑA
-              const Text('Nueva Contraseña', style: TextStyle(color: Colors.white, fontSize: 16)),
+              Text('Nueva Contraseña', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16)),
               const SizedBox(height: 8),
               TextField(
                 controller: _newPasswordController,
-                style: const TextStyle(color: Colors.black),
+                // style removed
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   hintText: 'Define tu nueva clave',
-                  filled: true,
-                  fillColor: Colors.white,
+                  // filled removed
+                  // fillColor removed
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.grey,
+                      color: Theme.of(context).iconTheme.color ?? Colors.grey,
                     ),
                     onPressed: () {
                       setState(() {
@@ -164,13 +164,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ElevatedButton(
                 onPressed: isLoading ? null : _handlePasswordReset,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
+                  // backgroundColor removed
+                  // foregroundColor removed
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: isLoading
-                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 3))
+                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3))
                     : const Text('Actualizar Contraseña', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],

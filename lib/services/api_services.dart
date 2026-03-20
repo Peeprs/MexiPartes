@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -20,78 +21,72 @@ class ApiService {
   // ---------------------------------------------------------
   Future<bool> createOrder(
     String userId,
-    List<CartItem> cartItems, // Necesitamos pasar los items del carrito
-    double total,
+    List<CartItem> cartItems,
     Address shippingAddress,
   ) async {
     try {
       // 0. Validar IDs para evitar error de UUID
       for (var item in cartItems) {
         if (item.id == '0' || item.id == '' || item.id == 'null') {
-          throw "Tu carrito contiene productos corruptos (IDs antiguos). Por favor, ve al carrito y elimínalos.";
+          throw Exception("Tu carrito contiene productos corruptos (IDs antiguos). Por favor, ve al carrito y elimínalos.");
         }
       }
 
-      // 1. Validar Stock Suficiente (Atomicidad básica)
+      double calculatedTotal = 0.0;
+      List<Map<String, dynamic>> orderItemsData = [];
+
+      // 1 y 2. Validar precios reales y Decrementar Stock Atómicamente
       for (var item in cartItems) {
-        // item.id es el ID del producto
+        // Consultar el precio real y existencia
         final productResponse = await _supabase
             .from('products')
-            .select('stock')
+            .select('precio')
             .eq('id', item.id)
-            .single();
+            .maybeSingle();
 
-        final currentStock = productResponse['stock'] as int;
-        if (currentStock < item.quantity) {
-          throw "No hay suficiente stock para ${item.name}. Disponible: $currentStock";
+        if (productResponse == null) {
+          throw Exception("El producto '${item.name}' ya no existe en el catálogo.");
         }
-      }
 
-      // 2. Decrementar Stock (Uno por uno)
-      for (var item in cartItems) {
-        final productResponse = await _supabase
-            .from('products')
-            .select('stock')
-            .eq('id', item.id)
-            .single();
+        final realPrice = (productResponse['precio'] as num).toDouble();
+        
+        // Ejecutar decremento atómico de stock vía RPC
+        final rowsAffected = await _supabase.rpc('decrement_stock', params: {
+          'product_id': item.id,
+          'quantity': item.quantity
+        });
 
-        // Recalcular por si cambió en milisegundos
-        final newStock = (productResponse['stock'] as int) - item.quantity;
+        if (rowsAffected == null || rowsAffected == 0) {
+          throw Exception("Stock insuficiente o producto inexistente para '${item.name}'.");
+        }
 
-        await _supabase
-            .from('products')
-            .update({'stock': newStock})
-            .eq('id', item.id);
-      }
+        calculatedTotal += (realPrice * item.quantity);
 
-      // 3. Crear el Objeto Orden
-      final orderItemsData = cartItems.map((item) {
-        return {
+        orderItemsData.add({
           'product_id': item.id,
           'product_name': item.name,
-          'price': item.price,
+          'price': realPrice, // USAR PRECIO REAL
           'quantity': item.quantity,
-          'image_url': item.imageUrl ?? '', // Manejar opcional
-          'seller_id': item.sellerId, // ID REAL del vendedor
-        };
-      }).toList();
+          'image_url': item.imageUrl ?? '',
+          'seller_id': item.sellerId,
+        });
+      }
 
       final orderData = {
         'buyer_id': userId,
-        'total': total,
-        'status': 'processing', // Empieza procesando
+        'total': calculatedTotal, // TOTAL CALCULADO SEGÚN BD
+        'status': 'processing',
         'items': orderItemsData,
         'shipping_address': shippingAddress.toJson(),
-        'created_at': DateTime.now()
-            .toIso8601String(), // Marca de tiempo para la simulación
+        'created_at': DateTime.now().toIso8601String(),
       };
 
-      // 4. Guardar Orden
+      // 3. Guardar Orden
       await _supabase.from('orders').insert(orderData);
 
       return true;
     } catch (e) {
-      print("Error creating order: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error creating order');
       rethrow; // Relanzar para que la UI se entere
     }
   }
@@ -108,7 +103,7 @@ class ApiService {
 
       return true;
     } catch (e) {
-      print("Error updating order status: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error updating order status');
       return false;
     }
   }
@@ -123,7 +118,7 @@ class ApiService {
           .order('created_at', ascending: false);
       return data.map((e) => Address.fromJson(e)).toList();
     } catch (e) {
-      print("Error fetching addresses: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error fetching addresses');
       return [];
     }
   }
@@ -143,7 +138,7 @@ class ApiService {
       await _supabase.from('addresses').upsert(data);
       return true;
     } catch (e) {
-      print("Error saving address: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error saving address');
       rethrow; // Relanzar para manejar en UI
     }
   }
@@ -153,7 +148,7 @@ class ApiService {
       await _supabase.from('addresses').delete().eq('id', addressId);
       return true;
     } catch (e) {
-      print("Error deleting address: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error deleting address');
       return false;
     }
   }
@@ -198,7 +193,7 @@ class ApiService {
                 .eq('id', response.user!.id)
                 .maybeSingle();
           } catch (e) {
-            print("Auto-repair profile failed: $e");
+            FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Auto-repair profile failed');
           }
         }
 
@@ -219,7 +214,7 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      print("Error Login: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error Login');
       return null;
     }
   }
@@ -290,7 +285,7 @@ class ApiService {
       final imageUrl = _supabase.storage.from('avatars').getPublicUrl(fileName);
       return imageUrl;
     } catch (e) {
-      print("Error uploading image: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error uploading image');
       return null;
     }
   }
@@ -386,7 +381,7 @@ class ApiService {
                 .maybeSingle();
           }
         } catch (e) {
-          print("Auto-repair in getUsuarioById failed: $e");
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Auto-repair in getUsuarioById failed');
         }
       }
 
@@ -438,7 +433,7 @@ class ApiService {
         return true; // Mostrar como 'Agotado' dentro de los 5 min
       }).toList();
     } catch (e) {
-      print("Error fetching products: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error fetching products');
       return [];
     }
   }
@@ -453,7 +448,7 @@ class ApiService {
             'imagen_url.ilike.%via.placeholder%,imagen_url.ilike.%google.com%',
           );
     } catch (e) {
-      print("Error cleaning test products: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error cleaning test products');
     }
   }
 
@@ -465,7 +460,7 @@ class ApiService {
           .ilike('nombre', '%$query%'); // Búsqueda insensible a mayúsculas
       return data.map((e) => Product.fromJson(e)).toList();
     } catch (e) {
-      print("Error searching products: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error searching products');
       return [];
     }
   }
@@ -478,7 +473,7 @@ class ApiService {
           .ilike('descripcion', '%$vehicleModel%'); // Simple ilike fallback
       return data.map((e) => Product.fromJson(e)).toList();
     } catch (e) {
-      print("Error filtering products: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error filtering products');
       return [];
     }
   }
@@ -497,7 +492,7 @@ class ApiService {
       await _supabase.from('products').insert(productData);
       return null; // Success
     } catch (e) {
-      print("Error creating product: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error creating product');
       return e.toString(); // Return error message
     }
   }
@@ -510,7 +505,7 @@ class ApiService {
           .eq('id', productId);
       return true;
     } catch (e) {
-      print("Error updating stock with timestamp: $e. Retrying...");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error updating stock with timestamp. Retrying...');
       try {
         // Fallback: Intentar solo stock si no existe columna updated_at
         await _supabase
@@ -519,7 +514,7 @@ class ApiService {
             .eq('id', productId);
         return true;
       } catch (e2) {
-        print("Error updating stock critical: $e2");
+        FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error updating stock critical2');
         return false;
       }
     }
@@ -530,7 +525,7 @@ class ApiService {
       await _supabase.from('products').delete().eq('id', productId);
       return true;
     } catch (e) {
-      print("Error deleting product: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error deleting product');
       return false;
     }
   }
@@ -587,7 +582,7 @@ class ApiService {
 
       return usuario;
     } catch (e) {
-      print("Error update: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error update');
       return null;
     }
   }
@@ -601,7 +596,7 @@ class ApiService {
 
       return true;
     } catch (e) {
-      print("Error deleting account: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error deleting account');
       try {
         await _supabase.from('profiles').delete().eq('id', userId);
         return true; // "Falso positivo" parcial, pero limpia datos públicos
@@ -630,7 +625,7 @@ class ApiService {
 
       return data.map((e) => OrderModel.fromJson(e)).toList();
     } catch (e) {
-      print("Error fetching orders: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error fetching orders');
       return [];
     }
   }
@@ -659,7 +654,90 @@ class ApiService {
       // TEMPORAL: Retorna todo para pruebas
       return allOrders;
     } catch (e) {
-      print("Error fetching sales: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'Error fetching sales');
+      return [];
+    }
+  }
+
+  // ---------------------------------------------------------
+  // 9. HOME SCREEN QUERIES
+  // ---------------------------------------------------------
+  Future<List<Product>> getFeaturedProducts() async {
+    try {
+      final List<dynamic> data = await _supabase
+          .from('products')
+          .select()
+          .gt('stock', 0)
+          .order('created_at', ascending: false)
+          .limit(10);
+      return data.map((e) => Product.fromJson(e)).toList();
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'getFeaturedProducts');
+      return [];
+    }
+  }
+
+  Future<List<Product>> getProductsByCategory(String category) async {
+    try {
+      final List<dynamic> data = await _supabase
+          .from('products')
+          .select()
+          .eq('categoria', category)
+          .gt('stock', 0)
+          .limit(10);
+      return data.map((e) => Product.fromJson(e)).toList();
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'getProductsByCategory');
+      return [];
+    }
+  }
+
+  Future<List<Product>> getCheapestProducts() async {
+    try {
+      final List<dynamic> data = await _supabase
+          .from('products')
+          .select()
+          .gt('stock', 0)
+          .order('precio', ascending: true)
+          .limit(10);
+      return data.map((e) => Product.fromJson(e)).toList();
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'getCheapestProducts');
+      return [];
+    }
+  }
+
+  Future<List<Product>> getBestSellers() async {
+    try {
+      // 1. Obtener los IDs más vendidos
+      // Enviamos 'limit_val' o ningún parámetro si es que la función espera uno específico, probaremos con "limit"
+      final List<dynamic> rpcData = await _supabase.rpc('get_best_sellers', params: {'limit_count': 10});
+      
+      if (rpcData.isEmpty) return [];
+
+      final List<String> bestSellerIds = rpcData.map((e) => e['product_id'].toString()).toList();
+
+      if (bestSellerIds.isEmpty) return [];
+
+      // 2. Traer los productos completos con esos IDs y stock > 0
+      final List<dynamic> data = await _supabase
+          .from('products')
+          .select()
+          .inFilter('id', bestSellerIds)
+          .gt('stock', 0);
+
+      final List<Product> products = data.map((e) => Product.fromJson(e)).toList();
+      
+      // Mantener el orden del RPC
+      products.sort((a, b) {
+        final iA = bestSellerIds.indexOf(a.id.toString());
+        final iB = bestSellerIds.indexOf(b.id.toString());
+        return iA.compareTo(iB);
+      });
+      
+      return products;
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current, reason: 'getBestSellers');
       return [];
     }
   }

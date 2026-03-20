@@ -63,9 +63,9 @@ class ConfirmationScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: const Text(
@@ -175,7 +175,7 @@ class ConfirmationScreen extends StatelessWidget {
   ) {
     return Container(
       padding: const EdgeInsets.all(20),
-      color: const Color(0xFF1C1C1E),
+      color: Theme.of(context).cardTheme.color,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

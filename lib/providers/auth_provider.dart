@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/usuario_model.dart';
 import '../services/api_services.dart';
 import '../services/firebase_notification_service.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class AuthProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
+  final _secureStorage = const FlutterSecureStorage();
 
   Usuario? _usuarioActual;
   bool _isLoading = false;
@@ -28,10 +30,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> loginAsGuest() async {
-    final prefs = await SharedPreferences.getInstance();
     _usuarioActual = null;
     _isGuest = true;
-    await prefs.setBool('is_guest', true);
+    await _secureStorage.write(key: 'is_guest', value: 'true');
     notifyListeners();
   }
 
@@ -40,10 +41,10 @@ class AuthProvider with ChangeNotifier {
   // ---------------------------------------------------------
   Future<void> _cargarUsuarioLocal() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      _isGuest = prefs.getBool('is_guest') ?? false;
+      final guestStr = await _secureStorage.read(key: 'is_guest');
+      _isGuest = guestStr == 'true';
 
-      final String? usuarioJson = prefs.getString('datos_usuario');
+      final String? usuarioJson = await _secureStorage.read(key: 'datos_usuario');
       if (usuarioJson != null) {
         _usuarioActual = Usuario.fromJson(jsonDecode(usuarioJson));
         // Si hay usuario guardado, forzamos que NO sea invitado
@@ -71,17 +72,15 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _guardarUsuarioLocal(Usuario usuario) async {
-    final prefs = await SharedPreferences.getInstance();
     String datos = jsonEncode(usuario.toJson());
-    await prefs.setString('datos_usuario', datos);
+    await _secureStorage.write(key: 'datos_usuario', value: datos);
     // IMPORTANTE: Si guardamos un usuario, ya no es invitado.
-    await prefs.setBool('is_guest', false);
+    await _secureStorage.write(key: 'is_guest', value: 'false');
   }
 
   Future<void> _borrarUsuarioLocal() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('datos_usuario');
-    await prefs.remove('is_guest');
+    await _secureStorage.delete(key: 'datos_usuario');
+    await _secureStorage.delete(key: 'is_guest');
   }
 
   // ---------------------------------------------------------
@@ -107,6 +106,8 @@ class AuthProvider with ChangeNotifier {
 
         // Registrar Token FCM
         await FirebaseNotificationService().initialize(usuario.id);
+
+        FirebaseCrashlytics.instance.setUserIdentifier(usuario.id);
 
         _isGuest = false;
         _setLoading(false);
@@ -242,6 +243,7 @@ class AuthProvider with ChangeNotifier {
     _usuarioActual = null;
     _isGuest = false;
     await _borrarUsuarioLocal();
+    FirebaseCrashlytics.instance.setUserIdentifier('');
     notifyListeners();
   }
 }

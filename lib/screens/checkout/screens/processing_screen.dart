@@ -41,12 +41,9 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
     try {
       // 2. Llamada a API (Real)
       final apiService = ApiService();
-      final total = cartItems.fold(
-        0.0,
-        (sum, item) => sum + (item.price * item.quantity),
-      );
 
-      await apiService.createOrder(user.id, cartItems, total, address);
+
+      await apiService.createOrder(user.id, cartItems, address);
 
       // 3. Éxito: Limpiar carrito y mostrar éxito
       cartProvider.clearCart();
@@ -88,7 +85,7 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),

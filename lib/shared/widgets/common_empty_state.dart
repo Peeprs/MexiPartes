@@ -27,17 +27,17 @@ class CommonEmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.grey[900],
+                color: Theme.of(context).cardTheme.color ?? Colors.grey[900],
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white10),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
-              child: Icon(icon, size: 48, color: Colors.grey[600]),
+              child: Icon(icon, size: 48, color: Theme.of(context).iconTheme.color),
             ),
             const SizedBox(height: 24),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.white,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -46,8 +46,8 @@ class CommonEmptyState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               subtitle,
-              style: const TextStyle(
-                color: Colors.white54,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white54,
                 fontSize: 16,
                 height: 1.5,
               ),

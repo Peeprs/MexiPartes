@@ -139,17 +139,17 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color ?? Theme.of(context).textTheme.bodyLarge?.color),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           widget.address == null ? 'Nueva Dirección' : 'Editar Dirección',
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color),
         ),
         centerTitle: true,
       ),
@@ -280,15 +280,15 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
+            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 16),
           ),
           const SizedBox(height: 8),
           TextFormField(
             controller: controller,
             keyboardType: keyboardType,
-            style: const TextStyle(
-              color: Colors.white,
-            ), // White text for dark mode
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ), // Dynamic text color
             decoration: InputDecoration(
               hintText: hint,
               // Theme defaults will handle fillColor (0xFF1C1C1E) and borders

@@ -1,0 +1,17 @@
+Analyzing home_screen.dart...
+
+  error - home_screen.dart:38:40 - The getter 'selectedCarModel' isn't defined for the type 'CarProvider'. Try importing the library that defines 'selectedCarModel', correcting the name to the name of an existing getter, or defining a getter or field named 'selectedCarModel'. - undefined_getter
+  error - home_screen.dart:39:31 - The getter 'selectedCarModel' isn't defined for the type 'CarProvider'. Try importing the library that defines 'selectedCarModel', correcting the name to the name of an existing getter, or defining a getter or field named 'selectedCarModel'. - undefined_getter
+  error - home_screen.dart:51:60 - The getter 'selectedCarModel' isn't defined for the type 'CarProvider'. Try importing the library that defines 'selectedCarModel', correcting the name to the name of an existing getter, or defining a getter or field named 'selectedCarModel'. - undefined_getter
+  error - home_screen.dart:121:49 - The getter 'selectedCarMarca' isn't defined for the type 'CarProvider'. Try importing the library that defines 'selectedCarMarca', correcting the name to the name of an existing getter, or defining a getter or field named 'selectedCarMarca'. - undefined_getter
+  error - home_screen.dart:121:77 - The getter 'selectedCarModel' isn't defined for the type 'CarProvider'. Try importing the library that defines 'selectedCarModel', correcting the name to the name of an existing getter, or defining a getter or field named 'selectedCarModel'. - undefined_getter
+warning - home_screen.dart:11:8 - Unused import: 'dart:math'. Try removing the import directive. - unused_import
+   info - home_screen.dart:210:45 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - home_screen.dart:318:49 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - home_screen.dart:358:45 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - home_screen.dart:379:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - home_screen.dart:505:60 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - home_screen.dart:511:65 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - home_screen.dart:520:60 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+
+13 issues found.

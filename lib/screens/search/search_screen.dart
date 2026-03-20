@@ -13,8 +13,8 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  final ApiService _apiService = ApiService();
-  final TextEditingController _searchController = TextEditingController();
+  final ApiService _api = ApiService();
+  final TextEditingController _searchCtrl = TextEditingController();
   List<Product> _products = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -22,164 +22,92 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadInitialData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitial());
   }
 
-  Future<void> _loadInitialData() async {
-    final carProvider = Provider.of<CarProvider>(context, listen: false);
-    if (carProvider.hasCarSelected) {
-      _fetchProductsByVehicle();
-    } else {
-      _customSearch("");
+  Future<void> _loadInitial() async {
+    final car = Provider.of<CarProvider>(context, listen: false);
+    car.hasCarSelected ? _fetchByVehicle() : _search('');
+  }
+
+  Future<void> _fetchByVehicle() async {
+    if (!mounted) return;
+    setState(() { _isLoading = true; _errorMessage = null; });
+    try {
+      final car = Provider.of<CarProvider>(context, listen: false);
+      final r = await _api.getProductsByVehicle(car.selectedModel ?? '');
+      if (mounted) setState(() => _products = r);
+    } catch (_) {
+      if (mounted) setState(() => _errorMessage = 'Error al cargar productos');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _fetchProductsByVehicle() async {
+  Future<void> _search(String q) async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
+    setState(() { _isLoading = true; _errorMessage = null; });
     try {
-      final carProvider = Provider.of<CarProvider>(context, listen: false);
-      final model = carProvider.selectedModel ?? '';
-      final results = await _apiService.getProductsByVehicle(model);
-      if (mounted) {
-        setState(() {
-          _products = results;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _errorMessage = "Error al cargar productos");
-      }
+      final r = q.isEmpty ? await _api.getProducts() : await _api.searchProducts(q);
+      if (mounted) setState(() => _products = r);
+    } catch (_) {
+      if (mounted) setState(() => _errorMessage = 'Error en la búsqueda');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _customSearch(String query) async {
-    if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      List<Product> results;
-      if (query.isEmpty) {
-        results = await _apiService.getProducts();
-      } else {
-        results = await _apiService.searchProducts(query);
-      }
-      if (mounted) {
-        setState(() {
-          _products = results;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _errorMessage = "Error en la búsqueda");
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final carProvider = Provider.of<CarProvider>(context);
+    final car   = Provider.of<CarProvider>(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            // --- HEADER OMNIBAR ---
+            // ── Header ──────────────────────────────────
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              color: Colors.black,
+              color: theme.scaffoldBackgroundColor,
               child: Column(
                 children: [
                   TextField(
-                    controller: _searchController,
-                    onSubmitted: _customSearch,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    controller: _searchCtrl,
+                    onSubmitted: _search,
                     decoration: InputDecoration(
                       hintText: '¿Qué buscas hoy?',
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                      prefixIcon: const Icon(Icons.search),
                       suffixIcon: IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.white70),
-                        onPressed: () {
-                          _searchController.clear();
-                          _loadInitialData();
-                        },
-                      ),
-                      filled: true,
-                      fillColor: const Color(0xFF151515),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: const BorderSide(color: Colors.white10),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: const BorderSide(
-                          color: Colors.red,
-                          width: 1,
-                        ),
+                        icon: const Icon(Icons.clear),
+                        onPressed: () { _searchCtrl.clear(); _loadInitial(); },
                       ),
                     ),
                   ),
-
-                  // FILTRO DE VEHÍCULO
-                  if (carProvider.hasCarSelected)
+                  if (car.hasCarSelected)
                     Padding(
-                      padding: const EdgeInsets.only(top: 12.0),
+                      padding: const EdgeInsets.only(top: 12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: theme.colorScheme.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.red.withOpacity(0.3),
-                          ),
+                          border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              Icons.directions_car,
-                              color: Colors.red,
-                              size: 16,
-                            ),
+                            Icon(Icons.directions_car, color: theme.colorScheme.primary, size: 16),
                             const SizedBox(width: 8),
                             Text(
-                              '${carProvider.selectedBrand} ${carProvider.selectedModel}',
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 13,
-                              ),
+                              '${car.selectedBrand} ${car.selectedModel}',
+                              style: TextStyle(color: theme.colorScheme.primary, fontSize: 13),
                             ),
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () => carProvider.clearCar(),
-                              child: const Icon(
-                                Icons.close,
-                                size: 16,
-                                color: Colors.redAccent,
-                              ),
+                              onTap: car.clearCar,
+                              child: Icon(Icons.close, size: 16, color: theme.colorScheme.primary),
                             ),
                           ],
                         ),
@@ -189,22 +117,19 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
 
-            // --- RESULTADOS ---
+            // ── Resultados ──────────────────────────────
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _errorMessage != null
-                  ? _buildErrorState()
-                  : _products.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _products.length,
-                      itemBuilder: (context, index) {
-                        final product = _products[index];
-                        return _buildProductCard(context, product);
-                      },
-                    ),
+                      ? Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.redAccent)))
+                      : _products.isEmpty
+                          ? _buildEmpty(theme)
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: _products.length,
+                              itemBuilder: (ctx, i) => _buildCard(ctx, _products[i], theme),
+                            ),
             ),
           ],
         ),
@@ -212,73 +137,52 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.search_off, size: 80, color: Colors.grey[900]),
-          const SizedBox(height: 16),
-          Text(
-            'Sin resultados',
-            style: TextStyle(color: Colors.grey[600], fontSize: 18),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildEmpty(ThemeData theme) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 80, color: theme.textTheme.bodySmall?.color),
+            const SizedBox(height: 16),
+            Text('Sin resultados', style: theme.textTheme.bodyLarge),
+          ],
+        ),
+      );
 
-  Widget _buildErrorState() {
-    return Center(
-      child: Text(
-        _errorMessage ?? 'Error desconocido',
-        style: const TextStyle(color: Colors.redAccent),
-      ),
-    );
-  }
-
-  Widget _buildProductCard(BuildContext context, Product product) {
+  Widget _buildCard(BuildContext context, Product product, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF151515),
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            // Navegar al detalle si existiera
-          },
           borderRadius: BorderRadius.circular(16),
+          onTap: () {},
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Imagen
                 Container(
                   width: 90,
                   height: 90,
                   decoration: BoxDecoration(
-                    color: Colors.grey[900],
+                    color: theme.inputDecorationTheme.fillColor,
                     borderRadius: BorderRadius.circular(12),
                     image: product.imagenUrl.isNotEmpty
                         ? DecorationImage(
                             image: NetworkImage(product.imagenUrl),
-                            fit: BoxFit.cover,
-                          )
+                            fit: BoxFit.cover)
                         : null,
                   ),
                   child: product.imagenUrl.isEmpty
-                      ? const Icon(Icons.broken_image, color: Colors.white24)
+                      ? Icon(Icons.broken_image, color: theme.textTheme.bodySmall?.color)
                       : null,
                 ),
-
                 const SizedBox(width: 16),
-
-                // Detalles
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,81 +190,46 @@ class _SearchScreenState extends State<SearchScreen> {
                       Text(
                         product.categoria.toUpperCase(),
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: theme.textTheme.bodySmall?.color,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        product.nombre,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      Text(product.nombre,
+                          style: theme.textTheme.bodyLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Text(
-                            '\$${product.precio.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              color: Colors.redAccent,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          Text('\$${product.precio.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold)),
                           const Spacer(),
-                          // Botón Añadir Rápido
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: theme.colorScheme.primary,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: IconButton(
-                              icon: const Icon(
-                                Icons.add_shopping_cart,
-                                color: Colors.black,
-                                size: 20,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 40,
-                                minHeight: 40,
-                              ),
+                              icon: const Icon(Icons.add_shopping_cart,
+                                  color: Colors.white, size: 20),
+                              constraints:
+                                  const BoxConstraints(minWidth: 40, minHeight: 40),
                               onPressed: () {
-                                Provider.of<CartProvider>(
-                                  context,
-                                  listen: false,
-                                ).addItem(
-                                  product.id.toString(),
-                                  product.nombre,
-                                  product.precio,
-                                  product.imagenUrl,
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.check_circle,
-                                          color: Colors.white,
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Text('${product.nombre} agregado'),
-                                      ],
-                                    ),
-                                    backgroundColor: Colors.green,
-                                    behavior: SnackBarBehavior.floating,
-                                    margin: const EdgeInsets.all(20),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                );
+                                Provider.of<CartProvider>(context, listen: false)
+                                    .addItem(product.id, product.nombre,
+                                        product.precio, product.imagenUrl);
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                  content: Text('${product.nombre} agregado'),
+                                  backgroundColor: Colors.green,
+                                  behavior: SnackBarBehavior.floating,
+                                ));
                               },
                             ),
                           ),

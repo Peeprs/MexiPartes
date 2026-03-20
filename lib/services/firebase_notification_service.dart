@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'notification_service.dart';
 
 // Función para manejar mensajes en segundo plano (debe ser top-level)
@@ -19,6 +20,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class FirebaseNotificationService {
   final _firebaseMessaging = FirebaseMessaging.instance;
   final _notificationService = NotificationService();
+  final _secureStorage = const FlutterSecureStorage();
 
   // Argumento opcional usando corchetes []
   Future<void> initialize([String? userId]) async {
@@ -34,18 +36,20 @@ class FirebaseNotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       // 2. Obtener Token FCM
+      final savedToken = await _secureStorage.read(key: 'fcm_token');
       final fcmToken = await _firebaseMessaging.getToken();
       print('🔥 FCM Token: $fcmToken');
 
-      if (userId != null && fcmToken != null) {
+      if (userId != null && fcmToken != null && fcmToken != savedToken) {
         try {
-          // Guardar el token en la tabla 'profiles' (o 'usuarios' si esa usas para metadatos)
-          // Asumimos que existe la columna 'fcm_token' en la tabla 'profiles'
+          // Guardar el token en la tabla 'profiles'
           final supabase = Supabase.instance.client;
           await supabase.from('profiles').upsert({
             'id': userId,
             'fcm_token': fcmToken,
           });
+          // También guardarlo localmente para evitar llamadas repetidas
+          await _secureStorage.write(key: 'fcm_token', value: fcmToken);
           print('✅ Token FCM guardado en Supabase para usuario $userId');
         } catch (e) {
           print('⚠️ Error guardando Token FCM en Supabase: $e');

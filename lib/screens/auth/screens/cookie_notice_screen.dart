@@ -9,9 +9,9 @@ class CookieNoticeScreen extends StatelessWidget {
     // final String sourceRoute = args?['sourceRoute'] ?? '/login';
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -34,24 +34,24 @@ class CookieNoticeScreen extends StatelessWidget {
                 ),
                 child: RichText(
                   text: TextSpan(
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontSize: 16,
                       height: 1.5,
                     ),
                     children: [
-                      _buildTitle('1. ¿Qué son las Cookies?'),
+                      _buildTitle(context, '1. ¿Qué son las Cookies?'),
                       _buildParagraph(
                         'Las cookies son pequeños archivos de texto que se almacenan en su dispositivo cuando utiliza nuestra aplicación. Nos ayudan a recordar sus preferencias y a entender cómo interactúa con nuestros servicios para mejorar su experiencia.',
                       ),
-                      _buildTitle('2. ¿Cómo Usamos las Cookies?'),
+                      _buildTitle(context, '2. ¿Cómo Usamos las Cookies?'),
                       _buildParagraph(
                         'Utilizamos diferentes tipos de cookies:\n'
                         '   • Cookies Esenciales: Necesarias para el funcionamiento básico de la app, como mantener su sesión iniciada.\n'
                         '   • Cookies de Rendimiento y Análisis: Nos ayudan a recopilar datos anónimos sobre el uso de la app para identificar áreas de mejora.\n'
                         '   • Cookies de Funcionalidad: Recuerdan sus elecciones (como el idioma o la región) para ofrecer una experiencia más personalizada.',
                       ),
-                      _buildTitle('3. Su Consentimiento'),
+                      _buildTitle(context, '3. Su Consentimiento'),
                       _buildParagraph(
                         'Al hacer clic en "Aceptar", usted consiente el uso de estas tecnologías. Puede retirar su consentimiento en cualquier momento desde la configuración de la aplicación. Tenga en cuenta que deshabilitar ciertas cookies puede afectar la funcionalidad de la aplicación.',
                       ),
@@ -80,11 +80,11 @@ class CookieNoticeScreen extends StatelessWidget {
   }
 
   // --- Helpers para dar estilo al texto ---
-  TextSpan _buildTitle(String text) {
+  TextSpan _buildTitle(BuildContext context, String text) {
     return TextSpan(
       text: '\n$text\n',
-      style: const TextStyle(
-        color: Colors.white,
+      style: TextStyle(
+        color: Theme.of(context).textTheme.titleLarge?.color,
         fontWeight: FontWeight.bold,
         fontSize: 18,
       ),

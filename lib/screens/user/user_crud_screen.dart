@@ -314,14 +314,14 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text(
           _isCreate ? 'Crear Usuario' : 'Editar Usuario',
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color ?? Theme.of(context).textTheme.bodyLarge?.color),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -350,10 +350,10 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
                           (_imageFile == null &&
                               (widget.usuario?.strFotoUrl == null ||
                                   widget.usuario!.strFotoUrl!.isEmpty))
-                          ? const Icon(
+                          ? Icon(
                               Icons.person,
                               size: 50,
-                              color: Colors.white,
+                              color: Theme.of(context).dividerColor,
                             )
                           : null,
                     ),
@@ -388,7 +388,7 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
 
               TextField(
                 controller: _nombre,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 // BLOQUEO DE NÚMEROS/SÍMBOLOS
                 inputFormatters: [_lettersOnlyFormatter],
                 decoration: _dec(label: 'Nombre *'),
@@ -397,7 +397,7 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: _apellidoP,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 // BLOQUEO DE NÚMEROS/SÍMBOLOS
                 inputFormatters: [_lettersOnlyFormatter],
                 decoration: _dec(label: 'Apellido Paterno *'),
@@ -406,7 +406,7 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: _apellidoM,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 // BLOQUEO DE NÚMEROS/SÍMBOLOS
                 inputFormatters: [_lettersOnlyFormatter],
                 decoration: _dec(label: 'Apellido Materno (Opcional)'),
@@ -416,7 +416,7 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
               TextField(
                 controller: _correo,
                 keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 decoration: _dec(label: 'Correo Electrónico *'),
                 textInputAction: TextInputAction.next,
               ),
@@ -426,7 +426,7 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
               TextField(
                 controller: _password,
                 obscureText: _obscurePassword, // Variable de visibilidad
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 decoration: _dec(
                   label: _isCreate
                       ? 'Contraseña (Obligatoria) *'
@@ -444,9 +444,9 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
 
               const SizedBox(height: 12),
               SwitchListTile(
-                title: const Text(
+                title: Text(
                   'Es Vendedor',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 ),
                 value: _esVendedor,
                 onChanged: (v) => setState(() => _esVendedor = v),
@@ -495,7 +495,7 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
                   padding: const EdgeInsets.only(top: 20),
                   child: Text(
                     'ID Usuario: ${widget.usuario!.id}',
-                    style: const TextStyle(color: Colors.white38),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                 ),
             ],
@@ -509,9 +509,9 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
   InputDecoration _dec({required String label, bool isPassword = false}) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.white70),
+      labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
       filled: true,
-      fillColor: Colors.grey[900],
+      // fillColor removed
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -522,7 +522,7 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
           ? IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                color: Colors.white54,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
               onPressed: () {
                 setState(() {
@@ -539,9 +539,9 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -549,7 +549,7 @@ class _UsuarioCrudScreenState extends State<UsuarioCrudScreen> {
           const Text(
             'Requisitos de seguridad:',
             style: TextStyle(
-              color: Colors.white60,
+              color: Colors.grey, // or generic grey, it's fine if the rest is gray
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),

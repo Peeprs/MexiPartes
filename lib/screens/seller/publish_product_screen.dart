@@ -163,11 +163,11 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
   Widget build(BuildContext context) {
     // Tema oscuro consistente
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Publicar Producto'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -176,10 +176,10 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Datos del Producto',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -259,15 +259,15 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[900],
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[200],
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    dropdownColor: Colors.grey[900],
+                    dropdownColor: Theme.of(context).cardTheme.color,
                     value: _selectedCategory,
                     isExpanded: true,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                     items: _categories.map((c) {
                       return DropdownMenuItem(value: c, child: Text(c));
                     }).toList(),
@@ -290,8 +290,8 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
                       icon: const Icon(Icons.camera_alt),
                       label: const Text("Cámara"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[800],
-                        foregroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).cardTheme.color,
+                        foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                   ),
@@ -302,8 +302,8 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
                       icon: const Icon(Icons.photo_library),
                       label: const Text("Galería"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[800],
-                        foregroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).cardTheme.color,
+                        foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                   ),
@@ -332,9 +332,9 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
                   height: 200,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey[900],
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[200],
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[800]!),
+                    border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[300]!),
                     image: _selectedImageFile != null
                         ? DecorationImage(
                             image: FileImage(_selectedImageFile!),
@@ -430,23 +430,25 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
     String? Function(String?)? validator,
     void Function(String)? onChanged,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return TextFormField(
       controller: controller,
       keyboardType: inputType,
       maxLines: lines,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
       validator: validator,
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[700]),
-        prefixIcon: Icon(icon, color: Colors.grey[600]),
+        hintStyle: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[600]),
+        prefixIcon: Icon(icon, color: isDark ? Colors.grey[600] : Colors.grey[500]),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 16,
           horizontal: 12,
         ), // <--- Espaciado interno
         filled: true,
-        fillColor: Colors.grey[900],
+        fillColor: isDark ? Colors.grey[900] : Colors.grey[200],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

@@ -3,13 +3,18 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../models/product_model.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/chat_service.dart';
+import '../chat_screen.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   const ProductDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Recibe el producto como argumento
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final Product? product =
         ModalRoute.of(context)?.settings.arguments as Product?;
 
@@ -20,13 +25,23 @@ class ProductDetailScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.scaffoldBackgroundColor.withOpacity(0.7),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: theme.iconTheme.color, size: 20),
+              onPressed: () => Navigator.of(context).pop(),
+              padding: EdgeInsets.zero,
+            ),
+          ),
         ),
       ),
       extendBodyBehindAppBar: true,
@@ -46,23 +61,22 @@ class ProductDetailScreen extends StatelessWidget {
                           imageUrl: product.imagenUrl,
                           fit: BoxFit.cover,
                           errorWidget: (context, url, error) => Container(
-                            color: Colors.grey[850],
-                            child: const Icon(
+                            color: isDark ? Colors.grey[850] : Colors.grey[300],
+                            child: Icon(
                               Icons.broken_image,
-                              color: Colors.white24,
+                              color: isDark ? Colors.white24 : Colors.black26,
                               size: 50,
                             ),
                           ),
                         )
                       : Container(
-                          color: Colors.grey[850],
-                          child: const Icon(
+                          color: isDark ? Colors.grey[850] : Colors.grey[300],
+                          child: Icon(
                             Icons.image,
-                            color: Colors.white24,
+                            color: isDark ? Colors.white24 : Colors.black26,
                             size: 50,
                           ),
                         ),
-                  // Gradiente inferior para que el texto resalte
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -75,7 +89,7 @@ class ProductDetailScreen extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.8),
+                            theme.scaffoldBackgroundColor,
                           ],
                         ),
                       ),
@@ -119,8 +133,8 @@ class ProductDetailScreen extends StatelessWidget {
                   // Nombre
                   Text(
                     product.nombre,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color ?? (isDark ? Colors.white : Colors.black),
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       height: 1.2,
@@ -131,40 +145,47 @@ class ProductDetailScreen extends StatelessWidget {
                   // Precio
                   Text(
                     '\$${product.precio.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color ?? (isDark ? Colors.white : Colors.black),
                       fontSize: 24,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // Separador
-                  Divider(color: Colors.grey[800]),
+                  Divider(color: theme.dividerColor),
                   const SizedBox(height: 16),
 
-                  // Descripción Título
-                  const Text(
+                  Text(
                     "Descripción",
                     style: TextStyle(
-                      color: Colors.white,
+                      color: theme.textTheme.bodyLarge?.color ?? (isDark ? Colors.white : Colors.black),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
 
-                  // Descripción Texto
                   Text(
                     product.descripcion.isNotEmpty
                         ? product.descripcion
                         : "Sin descripción disponible.",
                     style: TextStyle(
-                      color: Colors.grey[400],
+                      color: isDark ? Colors.grey[400] : Colors.grey[700],
                       fontSize: 16,
                       height: 1.5,
                     ),
                   ),
+
+                  const SizedBox(height: 24),
+
+                  // -----------------------------------------------
+                  // BOTÓN CHAT CON VENDEDOR
+                  // Solo si hay vendedor y el usuario es diferente
+                  // -----------------------------------------------
+                  if (product.sellerId != null &&
+                      product.sellerId!.isNotEmpty)
+                    _ChatButton(product: product),
 
                   const SizedBox(height: 40),
                 ],
@@ -176,25 +197,23 @@ class ProductDetailScreen extends StatelessWidget {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+          color: theme.bottomNavigationBarTheme.backgroundColor ?? theme.cardTheme.color,
+          border: Border(
+            top: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
+          ),
         ),
         child: ElevatedButton(
           onPressed: product.stock == 0
               ? null
               : () {
-                  final cart = Provider.of<CartProvider>(
-                    context,
-                    listen: false,
-                  );
-                  // Assuming addItem uses productId as String. Check CartProvider to be sure.
-                  // If productId is int in Product model, toString() is correct.
+                  final cart =
+                      Provider.of<CartProvider>(context, listen: false);
                   cart.addItem(
                     product.id.toString(),
                     product.nombre,
                     product.precio,
                     product.imagenUrl,
-                    sellerId: product.sellerId ?? '', // Pasamos el vendedor
+                    sellerId: product.sellerId ?? '',
                   );
 
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -205,15 +224,15 @@ class ProductDetailScreen extends StatelessWidget {
                       action: SnackBarAction(
                         label: 'VER CARRITO',
                         textColor: Colors.white,
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/cart');
-                        },
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/cart'),
                       ),
                     ),
                   );
                 },
           style: ElevatedButton.styleFrom(
-            backgroundColor: product.stock == 0 ? Colors.grey[800] : Colors.red,
+            backgroundColor:
+                product.stock == 0 ? Colors.grey[800] : Colors.red,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
@@ -228,6 +247,121 @@ class ProductDetailScreen extends StatelessWidget {
               fontWeight: FontWeight.bold,
               letterSpacing: 1,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------
+// Widget separado para el botón de chat
+// Maneja el estado de carga de forma independiente
+// -----------------------------------------------
+class _ChatButton extends StatefulWidget {
+  final Product product;
+  const _ChatButton({required this.product});
+
+  @override
+  State<_ChatButton> createState() => _ChatButtonState();
+}
+
+class _ChatButtonState extends State<_ChatButton> {
+  bool _isLoading = false;
+
+  Future<void> _openChat() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // Bloquear invitados
+    if (authProvider.isGuest || authProvider.usuarioActual == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Inicia sesión para chatear con el vendedor'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final currentUserId = authProvider.usuarioActual!.id;
+    final sellerId = widget.product.sellerId!;
+
+    // No chatear consigo mismo (si eres el vendedor de este producto)
+    if (currentUserId == sellerId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Este es tu propio producto'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final chatService = ChatService();
+      final chatId = await chatService.getOrCreateChat(
+        sellerId: sellerId,
+        productId: widget.product.id,
+        productName: widget.product.nombre,
+      );
+
+      if (!mounted) return;
+
+      // Navegar al chat
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            chatId: chatId,
+            otherUserName: 'Vendedor', // Puedes mejorar esto fetching el nombre
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo abrir el chat: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: _isLoading ? null : _openChat,
+        icon: _isLoading
+            ? SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: isDark ? Colors.white54 : Colors.black54,
+                ),
+              )
+            : const Icon(Icons.chat_bubble_outline, size: 20),
+        label: Text(
+          _isLoading ? 'Abriendo chat...' : 'Preguntar al vendedor',
+          style: const TextStyle(fontSize: 15),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: theme.textTheme.bodyLarge?.color ?? (isDark ? Colors.white : Colors.black),
+          side: BorderSide(color: isDark ? Colors.white30 : Colors.black38),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),

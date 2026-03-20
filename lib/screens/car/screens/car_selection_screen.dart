@@ -45,21 +45,16 @@ class _CarSelectionScreenState extends State<CarSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: BackButton(color: Colors.white),
+        leading: BackButton(color: Theme.of(context).iconTheme.color ?? Theme.of(context).textTheme.bodyLarge?.color),
       ),
       extendBodyBehindAppBar: true,
       body: Container(
         decoration: BoxDecoration(
-          // Fondo sutil con gradiente muy oscuro
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.black, const Color(0xFF101010)],
-          ),
+          color: Theme.of(context).scaffoldBackgroundColor,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -86,20 +81,20 @@ class _CarSelectionScreenState extends State<CarSelectionScreen> {
                 const SizedBox(height: 30),
 
                 // --- TÍTULO ---
-                const Text(
+                Text(
                   'Configura tu vehículo',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).textTheme.titleLarge?.color,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Filtraremos las refacciones para asegurarnos de que sean compatibles.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 16),
                 ),
                 const SizedBox(height: 50),
 
@@ -207,14 +202,12 @@ class _CarSelectionScreenState extends State<CarSelectionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFF151515),
+        color: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: enabled
-              ? (value != null
-                    ? Colors.redAccent.withValues(alpha: 0.5)
-                    : Colors.white10)
-              : Colors.white.withValues(alpha: 0.05),
+          color: value != null
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+              : Theme.of(context).dividerColor,
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -222,22 +215,22 @@ class _CarSelectionScreenState extends State<CarSelectionScreen> {
           value: value,
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: enabled ? Colors.white70 : Colors.white10,
+            color: enabled ? Theme.of(context).textTheme.bodyMedium?.color : Theme.of(context).disabledColor,
           ),
-          dropdownColor: const Color(0xFF202020),
+          dropdownColor: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(16),
           hint: Row(
             children: [
               Icon(
                 icon,
                 size: 20,
-                color: enabled ? Colors.grey[400] : Colors.white10,
+                color: enabled ? Theme.of(context).iconTheme.color : Theme.of(context).disabledColor,
               ),
               const SizedBox(width: 12),
               Text(
                 hint,
                 style: TextStyle(
-                  color: enabled ? Colors.grey[400] : Colors.grey[800],
+                  color: enabled ? Theme.of(context).textTheme.bodyMedium?.color : Theme.of(context).disabledColor,
                   fontSize: 15,
                 ),
               ),
@@ -248,12 +241,12 @@ class _CarSelectionScreenState extends State<CarSelectionScreen> {
               value: value,
               child: Row(
                 children: [
-                  Icon(icon, size: 20, color: Colors.white),
+                  Icon(icon, size: 20, color: Theme.of(context).iconTheme.color),
                   const SizedBox(width: 12),
                   Text(
                     value,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                     ),

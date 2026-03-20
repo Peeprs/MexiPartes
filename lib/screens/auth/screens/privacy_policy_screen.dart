@@ -10,9 +10,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
     final String sourceRoute = args?['sourceRoute'] ?? '/login';
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
@@ -35,17 +35,17 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 ),
                 child: RichText(
                   text: TextSpan(
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontSize: 16,
                       height: 1.5,
                     ),
                     children: [
-                      _buildTitle('1. Responsable de los Datos Personales'),
+                      _buildTitle(context, '1. Responsable de los Datos Personales'),
                       _buildParagraph(
                         'MexiPartes ("La Aplicación") es responsable del tratamiento de sus datos personales. Para cualquier duda relacionada con la protección de sus datos, puede contactarnos en [tu_correo_de_soporte@email.com].',
                       ),
-                      _buildTitle('2. Datos que Recopilamos'),
+                      _buildTitle(context, '2. Datos que Recopilamos'),
                       _buildParagraph(
                         'Para crear su cuenta y ofrecerle nuestros servicios, recopilamos la siguiente información:\n'
                         '   • Información de cuenta: Nombre de usuario, correo electrónico, contraseña.\n'
@@ -53,7 +53,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         '   • Información de contacto (opcional): Número de teléfono.\n'
                         '   • Datos de uso: Interacciones dentro de la app, búsquedas realizadas e información del dispositivo.',
                       ),
-                      _buildTitle('3. Finalidad del Tratamiento de Datos'),
+                      _buildTitle(context, '3. Finalidad del Tratamiento de Datos'),
                       _buildParagraph(
                         'Utilizamos sus datos para:\n'
                         '   • Proveer, mantener y mejorar nuestros servicios.\n'
@@ -62,7 +62,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         '   • Comunicarnos con usted para fines de soporte y notificaciones.\n'
                         '   • Cumplir con obligaciones legales.',
                       ),
-                      _buildTitle('4. Transferencia de Datos'),
+                      _buildTitle(context, '4. Transferencia de Datos'),
                       _buildParagraph(
                         'No compartiremos su información personal con terceros, excepto cuando sea necesario para proveer el servicio (ej. pasarelas de pago) o cuando sea requerido por la ley.',
                       ),
@@ -112,12 +112,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
 
-  // --- Helpers para dar estilo al texto ---
-  TextSpan _buildTitle(String text) {
+  TextSpan _buildTitle(BuildContext context, String text) {
     return TextSpan(
       text: '\n$text\n',
-      style: const TextStyle(
-        color: Colors.white,
+      style: TextStyle(
+        color: Theme.of(context).textTheme.titleLarge?.color,
         fontWeight: FontWeight.bold,
         fontSize: 18,
       ),

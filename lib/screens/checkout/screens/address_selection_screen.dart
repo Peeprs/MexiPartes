@@ -66,9 +66,9 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     final selectedAddress = _getSelectedAddress();
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -155,7 +155,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
         final address = _addresses[index];
         final isSelected = _selectedAddressId == address.id;
         return Card(
-          color: isSelected ? const Color(0xFF2C2C2E) : Colors.grey[900],
+          color: Theme.of(context).cardTheme.color,
           margin: const EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

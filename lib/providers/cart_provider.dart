@@ -33,12 +33,20 @@ class CartProvider extends ChangeNotifier {
     double price,
     String? imageUrl, {
     String sellerId = '',
+    int quantity = 1,
   }) {
+    if (price <= 0) {
+      throw Exception('El precio debe ser mayor a 0');
+    }
+    if (quantity <= 0) {
+      throw Exception('La cantidad debe ser mayor a 0');
+    }
+    
     final index = _items.indexWhere((item) => item.id == id);
     if (index >= 0) {
       // Si ya existe, actualizamos cantidad y aseguramos sellerId
       _items[index] = _items[index].copyWith(
-        quantity: _items[index].quantity + 1,
+        quantity: _items[index].quantity + quantity,
         sellerId: sellerId.isNotEmpty ? sellerId : _items[index].sellerId,
       );
     } else {
@@ -47,7 +55,7 @@ class CartProvider extends ChangeNotifier {
           id: id,
           name: name,
           price: price,
-          quantity: 1,
+          quantity: quantity,
           imageUrl: imageUrl,
           sellerId: sellerId,
         ),

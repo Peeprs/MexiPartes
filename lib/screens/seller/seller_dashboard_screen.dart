@@ -6,6 +6,7 @@ import '../../models/order_model.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'publish_product_screen.dart';
+import '../../shared/widgets/seller_chat_fab.dart'; // <-- NUEVO
 
 class SellerDashboardScreen extends StatefulWidget {
   const SellerDashboardScreen({super.key});
@@ -38,40 +39,25 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
     setState(() => _isLoading = true);
 
-    // 1. Cargar MIS Productos (Filtrado manual por ahora o query)
     final allProducts = await _apiService.getProducts(includeHidden: true);
-    // Filtramos los que sean míos (Suponiendo que el usuario actual es el vendedor)
-    // Nota: Como getProducts trae todos, filtramos en memoria.
-    // Idealmente el backend filtraría.
-    // OJO: Si el producto no tiene 'seller_id' guardado (modelos viejos), no saldrá.
-    _myProducts = allProducts; // .where((p) => p.sellerId == userId).toList();
-    // ^ TEMPORAL: Mostrar todos para que el usuario VEA algo y pueda editar stock.
-
-    // 2. Cargar MIS Ventas
+    _myProducts = allProducts;
     _mySales = await _apiService.getMySales(userId);
 
-    // 3. NUEVO: Iniciar escucha de nuevas órdenes en tiempo real
     try {
       if (mounted) {
         await RealtimeNotificationService().startListeningForOrders(userId);
-        await RealtimeNotificationService().startListeningForStockChanges(
-          userId,
-        );
-        print('🔔 Escucha de notificaciones activa');
+        await RealtimeNotificationService().startListeningForStockChanges(userId);
       }
     } catch (e) {
-      print('⚠️ Error al iniciar notificaciones: $e');
+      debugPrint('Error notificaciones: $e');
     }
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    // Detener escucha al salir
     RealtimeNotificationService().stopListening();
     super.dispose();
   }
@@ -79,30 +65,45 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Panel de Vendedor"),
-        backgroundColor: Colors.black,
+        title: const Text('Panel de Vendedor'),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.red,
           tabs: const [
-            Tab(text: "Mis Productos"),
-            Tab(text: "Ventas"),
+            Tab(text: 'Mis Productos'),
+            Tab(text: 'Ventas'),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PublishProductScreen()),
-          );
-          _loadData(); // Recargar al volver
-        },
-        backgroundColor: Colors.red,
-        child: const Icon(Icons.add, color: Colors.white),
+
+      // ── FABs apilados ───────────────────────────────
+      // floatingActionButton acepta una Column para apilar
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 1. Chat con compradores (con badge de no leídos)
+          const SellerChatFab(),
+          const SizedBox(height: 12),
+          // 2. Publicar producto
+          FloatingActionButton(
+            heroTag: 'publish_fab',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const PublishProductScreen(),
+                ),
+              );
+              _loadData();
+            },
+            backgroundColor: Colors.red,
+            tooltip: 'Publicar producto',
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
+        ],
       ),
+
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.red))
           : TabBarView(
@@ -112,12 +113,17 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
+  // ──────────────────────────────────────────────────────
+  // TAB: Mis Productos
+  // ──────────────────────────────────────────────────────
   Widget _buildProductsTab() {
     if (_myProducts.isEmpty) {
       return Center(
         child: Text(
-          "No tienes productos publicados",
-          style: TextStyle(color: Colors.grey[600]),
+          'No tienes productos publicados',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
         ),
       );
     }
@@ -127,25 +133,31 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       itemBuilder: (context, index) {
         final product = _myProducts[index];
         return Card(
-          color: Colors.grey[900],
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            leading: Image.network(
-              product.imagenUrl,
-              width: 50,
-              height: 50,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) =>
-                  const Icon(Icons.image_not_supported),
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                product.imagenUrl,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.image_not_supported),
+              ),
             ),
             title: Text(
               product.nombre,
-              style: const TextStyle(color: Colors.white),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             subtitle: Text(
-              "Stock: ${product.stock} | \$${product.precio}",
+              'Stock: ${product.stock} | \$${product.precio.toStringAsFixed(2)}',
               style: TextStyle(
-                color: product.stock == 0 ? Colors.red : Colors.grey,
+                color: product.stock == 0
+                    ? Colors.red
+                    : Theme.of(context).textTheme.bodySmall?.color,
                 fontWeight: product.stock == 0
                     ? FontWeight.bold
                     : FontWeight.normal,
@@ -170,12 +182,17 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
+  // ──────────────────────────────────────────────────────
+  // TAB: Ventas
+  // ──────────────────────────────────────────────────────
   Widget _buildSalesTab() {
     if (_mySales.isEmpty) {
       return Center(
         child: Text(
-          "No tienes ventas registradas",
-          style: TextStyle(color: Colors.grey[600]),
+          'No tienes ventas registradas',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
         ),
       );
     }
@@ -185,7 +202,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       itemBuilder: (context, index) {
         final order = _mySales[index];
         return Card(
-          color: Colors.grey[900],
           margin: const EdgeInsets.only(bottom: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -195,9 +211,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             children: [
               ListTile(
                 title: Text(
-                  "Pedido #${order.id}",
-                  style: const TextStyle(
-                    color: Colors.white,
+                  'Pedido #${order.id}',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -205,20 +220,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 4),
-                    Text(
-                      "Total: \$${order.total.toStringAsFixed(2)}",
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    Text(
-                      "${order.items.length} producto(s)",
-                      style: const TextStyle(color: Colors.grey),
-                    ),
+                    Text('Total: \$${order.total.toStringAsFixed(2)}'),
+                    Text('${order.items.length} producto(s)'),
                   ],
                 ),
                 trailing: _buildStatusChip(order.status),
               ),
-
-              // Botones de acción
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: Wrap(
@@ -227,7 +234,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   children: [
                     if (order.status == OrderStatus.processing)
                       _buildActionButton(
-                        label: "Marcar como Enviado",
+                        label: 'Marcar Enviado',
                         icon: Icons.local_shipping,
                         color: Colors.blue,
                         onPressed: () =>
@@ -235,7 +242,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       ),
                     if (order.status == OrderStatus.shipped)
                       _buildActionButton(
-                        label: "Marcar como Entregado",
+                        label: 'Marcar Entregado',
                         icon: Icons.check_circle,
                         color: Colors.green,
                         onPressed: () =>
@@ -244,7 +251,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     if (order.status == OrderStatus.processing ||
                         order.status == OrderStatus.shipped)
                       _buildActionButton(
-                        label: "Devolver",
+                        label: 'Devolver',
                         icon: Icons.assignment_return,
                         color: Colors.red,
                         onPressed: () =>
@@ -260,29 +267,22 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
+  // ──────────────────────────────────────────────────────
+  // HELPERS
+  // ──────────────────────────────────────────────────────
   Widget _buildStatusChip(OrderStatus status) {
     Color color;
     String text;
-
     switch (status) {
       case OrderStatus.processing:
-        color = Colors.orange;
-        text = "PROCESANDO";
-        break;
+        color = Colors.orange; text = 'PROCESANDO'; break;
       case OrderStatus.shipped:
-        color = Colors.blue;
-        text = "ENVIADO";
-        break;
+        color = Colors.blue;   text = 'ENVIADO';    break;
       case OrderStatus.delivered:
-        color = Colors.green;
-        text = "ENTREGADO";
-        break;
+        color = Colors.green;  text = 'ENTREGADO';  break;
       case OrderStatus.returned:
-        color = Colors.red;
-        text = "DEVUELTO";
-        break;
+        color = Colors.red;    text = 'DEVUELTO';   break;
     }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -314,6 +314,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         side: BorderSide(color: color, width: 1),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        elevation: 0,
       ),
       icon: Icon(icon, size: 16),
       label: Text(label),
@@ -323,29 +324,16 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
   Future<void> _updateOrderStatus(int orderId, String newStatus) async {
     final success = await _apiService.updateOrderStatus(orderId, newStatus);
-
-    if (success) {
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 10),
-              Text("Estado actualizado correctamente"),
-            ],
+          content: Text(
+            success ? 'Estado actualizado' : 'Error al actualizar',
           ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
+          backgroundColor: success ? Colors.green : Colors.red,
         ),
       );
-      _loadData(); // Recargar las ventas
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Error al actualizar el estado"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (success) _loadData();
     }
   }
 
@@ -354,52 +342,38 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: Text(
-          "Editar Stock: ${product.nombre}",
-          style: const TextStyle(color: Colors.white),
-        ),
+        title: Text('Stock: ${product.nombre}'),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(labelText: "Nuevo Stock"),
+          decoration: const InputDecoration(labelText: 'Nuevo stock'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancelar"),
+            child: const Text('Cancelar'),
           ),
           ElevatedButton(
             onPressed: () async {
               final newStock = int.tryParse(controller.text);
-              if (newStock != null) {
-                // Llamamos a la API para actualizar el stock de verdad
-                final success = await _apiService.updateProductStock(
-                  product.id,
-                  newStock,
+              if (newStock == null) return;
+              Navigator.pop(ctx);
+              final ok = await _apiService.updateProductStock(
+                product.id, newStock,
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      ok ? 'Stock actualizado' : 'Error al actualizar stock',
+                    ),
+                    backgroundColor: ok ? Colors.green : Colors.red,
+                  ),
                 );
-
-                Navigator.pop(ctx);
-
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Stock actualizado correctamente"),
-                    ),
-                  );
-                  _loadData(); // Recargamos para ver el cambio
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Error al actualizar stock"),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
+                if (ok) _loadData();
               }
             },
-            child: const Text("Guardar"),
+            child: const Text('Guardar'),
           ),
         ],
       ),
@@ -410,51 +384,33 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          "¿Eliminar Producto?",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('¿Eliminar Producto?'),
         content: Text(
-          "¿Estás seguro de eliminar '${product.nombre}'? Esta acción no se puede deshacer.",
-          style: const TextStyle(color: Colors.white70),
+          "¿Eliminar '${product.nombre}'? Esta acción no se puede deshacer.",
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancelar"),
+            child: const Text('Cancelar'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               Navigator.pop(ctx);
-
-              // Mostrar indicador de carga
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Eliminando producto...")),
-              );
-
-              // Llamar a la API para eliminar
-              final success = await _apiService.deleteProduct(product.id);
-
-              if (success) {
+              final ok = await _apiService.deleteProduct(product.id);
+              if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Producto eliminado correctamente"),
-                    backgroundColor: Colors.green,
+                  SnackBar(
+                    content: Text(
+                      ok ? 'Producto eliminado' : 'Error al eliminar',
+                    ),
+                    backgroundColor: ok ? Colors.green : Colors.red,
                   ),
                 );
-                _loadData(); // Recargar lista
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Error al eliminar producto"),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                if (ok) _loadData();
               }
             },
-            child: const Text("Eliminar"),
+            child: const Text('Eliminar'),
           ),
         ],
       ),

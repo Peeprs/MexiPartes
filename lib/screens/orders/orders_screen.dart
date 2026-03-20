@@ -30,9 +30,9 @@ class _OrdersScreenState extends State<OrdersScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -42,9 +42,9 @@ class _OrdersScreenState extends State<OrdersScreen>
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.red,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.red,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(context).textTheme.bodySmall?.color,
+          indicatorColor: Theme.of(context).colorScheme.primary,
           indicatorWeight: 3,
           tabs: const [
             Tab(text: 'Entregados'),
@@ -55,7 +55,7 @@ class _OrdersScreenState extends State<OrdersScreen>
         ),
       ),
       body: Container(
-        color: Colors.black, // Prevent magenta flash during transitions
+        color: Theme.of(context).scaffoldBackgroundColor, // Prevent magenta flash during transitions
         child: TabBarView(
           controller: _tabController,
           children: const [

@@ -55,7 +55,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: Theme.of(context).cardTheme.color,
         title: const Text(
           'Confirmar Eliminación',
           style: TextStyle(color: Colors.white),
@@ -110,9 +110,9 @@ class _AddressesScreenState extends State<AddressesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -167,7 +167,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
       itemBuilder: (context, index) {
         final address = _addresses[index];
         return Card(
-          color: const Color(0xFF1E1E1E),
+          color: Theme.of(context).cardTheme.color,
           margin: const EdgeInsets.only(bottom: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

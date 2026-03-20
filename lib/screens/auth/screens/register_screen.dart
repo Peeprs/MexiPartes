@@ -176,14 +176,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final isLoading = authProvider.isLoading;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
+        iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
+        title: Text(
           'Crear Cuenta',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color),
         ),
         centerTitle: true,
       ),
@@ -204,19 +204,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     vertical: 20.0,
                   ),
                   children: [
-                    const Text(
+                    Text(
                       'Únete a MexiPartes',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Theme.of(context).textTheme.titleLarge?.color,
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Gestiona tus pedidos y compras',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
@@ -226,7 +226,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _nameController,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                       inputFormatters: [_lettersOnlyFormatter],
                       decoration: _buildInputDecoration('Ej. Juan'),
                     ),
@@ -242,7 +242,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const SizedBox(height: 8),
                               TextField(
                                 controller: _lastNamePaternalController,
-                                style: const TextStyle(color: Colors.white),
+                                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                                 inputFormatters: [_lettersOnlyFormatter],
                                 decoration: _buildInputDecoration('Ej. Pérez'),
                               ),
@@ -258,7 +258,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const SizedBox(height: 8),
                               TextField(
                                 controller: _lastNameMaternalController,
-                                style: const TextStyle(color: Colors.white),
+                                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                                 inputFormatters: [_lettersOnlyFormatter],
                                 decoration: _buildInputDecoration('Ej. López'),
                               ),
@@ -273,7 +273,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _emailController,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                       keyboardType: TextInputType.emailAddress,
                       decoration: _buildInputDecoration(
                         'ejemplo@correo.com',
@@ -288,7 +288,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     TextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                       onChanged: (val) => _validatePassword(),
                       decoration: _buildInputDecoration(
                         '••••••••',
@@ -306,7 +306,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     TextField(
                       controller: _confirmPasswordController,
                       obscureText: _obscurePassword,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                       decoration: _buildInputDecoration(
                         '••••••••',
                         prefixIcon: Icons.lock_outline,
@@ -317,17 +317,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // --- CHECKBOX VENDEDOR ---
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[900],
+                        color: Theme.of(context).cardTheme.color,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: CheckboxListTile(
-                        title: const Text(
+                        title: Text(
                           "¿Quieres vender productos?",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           "Activa esto para crear tu tienda",
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
                         ),
                         value: _isSeller,
                         activeColor: Colors.white,
@@ -358,7 +358,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 style: TextStyle(
                                   color: _termsError != null
                                       ? Colors.red
-                                      : Colors.white,
+                                      : Theme.of(context).textTheme.bodyMedium?.color,
                                   fontSize: 14,
                                 ),
                                 children: [
@@ -461,9 +461,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           "¿Ya tienes cuenta?",
-                          style: TextStyle(color: Colors.white70),
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context),
@@ -493,7 +493,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     padding: const EdgeInsets.only(bottom: 8.0),
     child: Text(
       text,
-      style: const TextStyle(color: Colors.white70, fontSize: 13),
+      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13),
     ),
   );
 
@@ -505,9 +505,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey[700]),
+      hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
       filled: true,
-      fillColor: Colors.grey[900],
+      fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardTheme.color,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
@@ -515,14 +515,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide(color: Colors.grey[800]!),
+        borderSide: BorderSide(color: Theme.of(context).dividerColor),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
         borderSide: const BorderSide(color: Colors.red, width: 1.5),
       ),
       prefixIcon: prefixIcon != null
-          ? Icon(prefixIcon, color: Colors.grey[600])
+          ? Icon(prefixIcon, color: Theme.of(context).iconTheme.color)
           : null,
       suffixIcon: isPassword
           ? IconButton(
@@ -530,7 +530,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 _obscurePassword
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
-                color: Colors.grey[600],
+                color: Theme.of(context).iconTheme.color,
               ),
               splashRadius: 20,
               onPressed: () =>

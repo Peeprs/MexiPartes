@@ -28,9 +28,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ModalRoute.of(context)!.settings.arguments as List<CartItem>;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -112,7 +112,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }) {
     final isSelected = _selectedPaymentIndex == index;
     return Card(
-      color: isSelected ? const Color(0xFF2C2C2E) : Colors.grey[900],
+      color: Theme.of(context).cardTheme.color,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -137,7 +137,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

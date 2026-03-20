@@ -77,7 +77,7 @@ class _OrdersListTabState extends State<OrdersListTab>
 
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: Colors.white),
+        child: CircularProgressIndicator(),
       );
     }
 
@@ -99,11 +99,11 @@ class _OrdersListTabState extends State<OrdersListTab>
     }
 
     return Container(
-      color: Colors.black,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: RefreshIndicator(
         onRefresh: _fetchOrders,
-        color: Colors.white,
-        backgroundColor: Colors.grey[900],
+        color: Theme.of(context).colorScheme.primary,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         child: ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: filteredOrders.length,
